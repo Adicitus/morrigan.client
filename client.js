@@ -83,15 +83,14 @@ function connect() {
 
     log(`Connecting to '${settings.reportURL}'`)
 
-    const connection = new WebSocket(settings.reportURL)
+    const connection = new WebSocket(settings.reportURL, { origin: providers.client.getToken()})
 
     connection.on('error', (e) => {
         console.log(`${new Date()} | Failed to contact server: ${e}`)
     })
 
     connection.onopen = () => {
-        console.log(providers)
-        connection.send(providers.client.getToken())
+        console.log(`${new Date()} | Connection to server opened.`)
     }
 
     connection.on('message', (message) => {
