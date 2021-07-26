@@ -23,8 +23,14 @@ if (!fs.existsSync(stateDir)) {
  *  + A 'messages' object. Each key on the 'messages' object should
  *    define a handler that can accept the message object received
  *    from the server, a connection object and the core environment.
- *  + A setup function that will be called with the core environment
+ *  + A 'setup' function that will be called with the core environment
  *    as parameter once client has finished initializing.
+ *  + A 'onConnect' function that will be called when the client
+ *    connects to a server.
+ *  + A 'onDisconnect' function that will be called when the connection
+ *    the server is closed.
+ *  + A 'onStop' function that is called when the client receives a stop
+ *    signal rom the OS.
  */
 function loadProviders(providersDir, providers) {
     if (!providersDir) {
@@ -51,7 +57,9 @@ function loadProviders(providersDir, providers) {
 
     return providers
 }
+// Loading core providers:
 var providers = loadProviders()
+// Loading extra providers if relevant:
 if (settings.providers.path) {
     providers = loadProviders(settings.providers.path, providers)
 }
@@ -81,15 +89,6 @@ function connect() {
 
     var reconnect = true
 
-    // Request token refresh every 8 hours.
-    const tokenRefresh = setInterval(() => {
-            connection.send(JSON.stringify(
-                { type: 'client.token.refresh' }
-            ))
-        },
-        (8 * 3600 * 1000)
-    )
-
     log(`Connecting to '${settings.reportURL}'`)
 
     const connection = new WebSocket(settings.reportURL, { origin: providers.client.getToken()})
@@ -100,10 +99,18 @@ function connect() {
 
     connection.onopen = () => {
         console.log(`${new Date()} | Connection to server opened.`)
+
+        for (const n in providers) {
+            let p = providers[n]
+
+            if (p.onConnect) {
+                p.onConnect(connection, coreEnv)
+            }
+        }
+
     }
 
     connection.on('message', (message) => {
-        // TODO: Handle messages
 
         try {
             var msg = JSON.parse(message)
@@ -148,9 +155,17 @@ function connect() {
 
     connection.on('close', (e) => {
         log(`Connection to server closed`)
+
+        for (const n in providers) {
+            let p = providers[n]
+    
+            if (p.onDisconnect) {
+                p.onDisconnect(connection, coreEnv)
+            }
+        }
+
         if (reconnect) {
             log(`Attempting to reconnect in 30 seconds: ${e}`)
-            clearInterval(tokenRefresh)
             setTimeout(connect, 30000)
         }
     })
@@ -164,7 +179,29 @@ function connect() {
                 state: `stopped.${e}`
             }))
             connection.close()
+
+            /*
+             * Calling 'onDisconnect' handlers here because the 'close' event
+             * on ws connection objects does not get called when the 'close'
+             * method is called.
+             */
+            for (const n in providers) {
+                let p = providers[n]
+        
+                if (p.onDisconnect) {
+                    p.onDisconnect(connection, coreEnv)
+                }
+            }
         }
+
+        for (const n in providers) {
+            let p = providers[n]
+    
+            if (p.onStop) {
+                p.onStop(e, connection, coreEnv)
+            }
+        }
+
         process.exit()
     }
 

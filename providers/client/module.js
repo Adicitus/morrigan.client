@@ -5,6 +5,7 @@ module.exports.version = '0.1.0.0'
 
 var tokenPath = null
 var token = null
+var tokenRefreshInterval
 
 const loadToken = () => {
     try {
@@ -34,6 +35,28 @@ module.exports.setup = (core) => {
         token = loadToken()
     }
 
+}
+
+module.exports.onConnect = (connection) => {
+    console.log('Connection opened.')
+
+    tokenRefreshInterval = setInterval(() => {
+        connection.send(JSON.stringify(
+            { type: 'client.token.refresh' }
+        ))
+    },
+    (/* 8 * 3600 */ 30 * 1000)
+)
+
+}
+
+module.exports.onDisconnect = () => {
+    console.log('Connection closed.')
+
+    if (tokenRefreshInterval) {
+        clearInterval(tokenRefreshInterval)
+        tokenRefreshInterval = null
+    }
 }
 
 module.exports.messages = {
