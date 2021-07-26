@@ -16,9 +16,15 @@ if (!fs.existsSync(stateDir)) {
     fs.mkdirSync(stateDir)
 }
 
-function loadProviders() {
-    let providers = {}
-    let providersDir = `${__dirname}/providers`
+function loadProviders(providersDir, providers) {
+    if (!providersDir) {
+        providersDir = `${__dirname}/providers`
+    }
+
+    if (!providers) {
+        providers = {}
+    }
+
     let providerNames = fs.readdirSync(providersDir)
     for (var i in providerNames) {
         let name = providerNames[i]
@@ -46,6 +52,9 @@ function loadProviders() {
  *    as parameter once client has finished initializing.
  */
 var providers = loadProviders()
+if (settings.providers.path) {
+    providers = loadProviders(settings.providers.path, providers)
+}
 
 /**
  * Core environment object, passed to all message handlers and setup functions.
