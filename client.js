@@ -16,6 +16,16 @@ if (!fs.existsSync(stateDir)) {
     fs.mkdirSync(stateDir)
 }
 
+
+/**
+ * Handlers should be defined as modules and loaded from the 'providers' directory.
+ * Provider modules should export a 'version' string and optionally:
+ *  + A 'messages' object. Each key on the 'messages' object should
+ *    define a handler that can accept the message object received
+ *    from the server, a connection object and the core environment.
+ *  + A setup function that will be called with the core environment
+ *    as parameter once client has finished initializing.
+ */
 function loadProviders(providersDir, providers) {
     if (!providersDir) {
         providersDir = `${__dirname}/providers`
@@ -41,16 +51,6 @@ function loadProviders(providersDir, providers) {
 
     return providers
 }
-
-/**
- * Handlers should be defined as modules and loaded from the 'providers' directory.
- * Provider modules should export a 'version' string and optionally:
- *  + A 'messages' object. Each key on the 'messages' object should
- *    define a handler that can accept the message object received
- *    from the server, a connection object and the core environment.
- *  + A setup function that will be called with the core environment
- *    as parameter once client has finished initializing.
- */
 var providers = loadProviders()
 if (settings.providers.path) {
     providers = loadProviders(settings.providers.path, providers)
