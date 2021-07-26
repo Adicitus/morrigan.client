@@ -1,0 +1,13 @@
+module.exports = {
+
+    // The path to the state directory. If this option is not specified,
+    // the state directory will be created under the morrigan client directory.
+    stateDir: "/morrigan.client/state",
+
+    providers: {
+        path: "/morrigan.client/providers"
+    },
+
+    reportURL: "http://localhost/api/connect",
+    token: "RkxPUkVOU1RS.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhmY2U3ZGVhLTdhMDItNGQ1NS1hMzdkLTc3NTkwNGEzMTU4OSIsImNsaWVudElkIjoiRkxPUkVOU1RSIiwiaWF0IjoxNjE0Nzk1MDcwLCJleHAiOjE2MTczODM0NzB9.-_hN4wSkmDUbvMq3ADRH4sqYYjJtZr52I1o8xe-kI1Q"
+}

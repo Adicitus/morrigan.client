@@ -3,8 +3,7 @@
 const WebSocket = require('ws')
 const fs = require('fs')
 
-const settingsRaw = fs.readFileSync(`${__dirname}/client.settings.json`)
-const settings = JSON.parse(settingsRaw)
+const settings = require(`${__dirname}/client.settings`)
 
 const stateDir = (settings.stateDir) ? settings.stateDir : `${__dirname}/state`
 
@@ -13,7 +12,7 @@ function log(msg) {
 }
 
 if (!fs.existsSync(stateDir)) {
-    fs.mkdirSync(stateDir)
+    fs.mkdirSync(stateDir, {recursive: true})
 }
 
 
