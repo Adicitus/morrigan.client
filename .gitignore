@@ -1,4 +1,4 @@
 node_modules
 package-lock.json
-client.settings.json
+client.settings.js
 state
