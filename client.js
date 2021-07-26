@@ -96,7 +96,7 @@ function connect() {
         console.log(`${new Date()} | Failed to contact server: ${e}`)
     })
 
-    connection.onopen = () => {
+    connection.on('open', () => {
         console.log(`${new Date()} | Connection to server opened.`)
 
         for (const n in providers) {
@@ -107,7 +107,7 @@ function connect() {
             }
         }
 
-    }
+    })
 
     connection.on('message', (message) => {
 
