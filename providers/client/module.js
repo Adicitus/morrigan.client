@@ -15,7 +15,7 @@ const loadToken = () => {
     }
 }
 
-const saveToken = (token) => {
+const saveToken = () => {
     fs.writeFileSync(tokenPath, token)
 }
 
@@ -28,8 +28,8 @@ module.exports.setup = (core) => {
     tokenPath = `${core.stateDir}/curToken`
 
     if (!fs.existsSync(tokenPath)) {
-        saveToken(core.settings.token)
         token = core.settings.token
+        saveToken()
     } else {
         token = loadToken()
     }
@@ -40,6 +40,6 @@ module.exports.messages = {
     'token.issue': (message, connection, core) => {
         console.log(`${new Date()} | New token issued.`)
         token = message.token
-        saveToken(core.stateDir)
+        saveToken()
     }
 }
