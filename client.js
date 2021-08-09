@@ -72,7 +72,7 @@ function loadProviders(providersDir, providers) {
 // Loading core providers:
 var providers = loadProviders()
 // Loading extra providers if relevant:
-if (settings.providers.path) {
+if (settings.providers && settings.providers.path) {
     providers = loadProviders(settings.providers.path, providers)
 }
 
