@@ -3,7 +3,20 @@
 const WebSocket = require('ws')
 const fs = require('fs')
 
-const settings = require(`${__dirname}/client.settings`)
+let clientSettingsPath = `${__dirname}/client.settings`
+
+// Assume that the first argument is a client.settings.js file:
+if (process.argv[2]) {
+    let sfp = process.argv[2]
+
+    let r = (sfp.match(/^(?<module>.*)\.js$/))
+    
+    if (r && fs.existsSync(sfp)) {
+        clientSettingsPath = r.groups.module
+    }
+}
+
+const settings = require(clientSettingsPath)
 
 const stateDir = (settings.stateDir) ? settings.stateDir : `${__dirname}/state`
 
