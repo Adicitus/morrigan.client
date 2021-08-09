@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-module.exports.version = '0.1.0.0'
+module.exports.version = '0.1.0.4'
 
 
 var tokenPath = null
