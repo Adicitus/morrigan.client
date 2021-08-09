@@ -1,13 +1,17 @@
 "use strict"
 
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
+const argv = yargs(hideBin(process.argv)).argv
+
 const WebSocket = require('ws')
 const fs = require('fs')
 
 let clientSettingsPath = `${__dirname}/client.settings`
 
 // Assume that the first argument is a client.settings.js file:
-if (process.argv[2]) {
-    let sfp = process.argv[2]
+if (argv.settingsFile) {
+    let sfp = argv.settingsFile
 
     let r = (sfp.match(/^(?<module>.*)\.js$/))
     
@@ -81,6 +85,7 @@ if (settings.providers && settings.providers.path) {
  */
 const coreEnv = {
     'settings': settings,
+    'args': argv,
     'providers': providers,
     'log': log,
     'stateDir': stateDir

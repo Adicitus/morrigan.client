@@ -38,8 +38,17 @@ module.exports.setup = (core) => {
     tokenPath = `${core.stateDir}/token`
     tokenExpirationPath = `${core.stateDir}/token.expiration`
 
-    if (!fs.existsSync(tokenPath)) {
-        token = core.settings.token
+    if (!fs.existsSync(tokenPath) || (core.args.force && (core.args.token || core.args.tokenFile))) {
+        if (core.args.token) {
+            token = core.args.token
+        } else if (core.args.tokenFile && fs.existsSync(core.args.tokenFile)) {
+            token = fs.readFileSync(core.args.tokenFile, {encoding: 'utf8'})
+        } else if(core.settings.token) {
+            token = core.settings.token
+        } else {
+            throw new Error('No token set provided.')
+        }
+        
         saveToken()
     } else {
         loadToken()
