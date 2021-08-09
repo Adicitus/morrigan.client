@@ -9,7 +9,6 @@ const fs = require('fs')
 
 let clientSettingsPath = `${__dirname}/client.settings`
 
-// Assume that the first argument is a client.settings.js file:
 if (argv.settingsFile) {
     let sfp = argv.settingsFile
 
@@ -20,9 +19,17 @@ if (argv.settingsFile) {
     }
 }
 
-const settings = require(clientSettingsPath)
+var settings = {}
 
-const stateDir = (settings.stateDir) ? settings.stateDir : `${__dirname}/state`
+if (fs.existsSync(`${clientSettingsPath}.js`)) {
+    settings = require(clientSettingsPath)
+}
+
+var stateDir = (settings.stateDir) ? settings.stateDir : `${__dirname}/state`
+
+if (argv.stateDir) {
+    stateDir = argv.stateDir
+}
 
 function log(msg) {
     console.log(`${new Date()} | ${msg}`)
@@ -105,10 +112,18 @@ for (const p in providers) {
 function connect() {
 
     var reconnect = true
+    var reportURL = ""
+    if(argv.reportURL) {
+        reportURL = argv.reportURL
+    } else if(settings.reportURL) {
+        reportURL = settings.reportURL
+    } else {
+        throw new Error('No reportURL specified.')
+    }
 
-    log(`Connecting to '${settings.reportURL}'`)
+    log(`Connecting to '${reportURL}'`)
 
-    const connection = new WebSocket(settings.reportURL, { origin: providers.client.getToken()})
+    const connection = new WebSocket(reportURL, { origin: providers.client.getToken()})
 
     connection.on('error', (e) => {
         console.log(`${new Date()} | Failed to contact server: ${e}`)
