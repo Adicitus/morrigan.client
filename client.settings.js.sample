@@ -5,9 +5,11 @@ module.exports = {
     stateDir: "/morrigan.client/state",
 
     providers: {
+        // Path to a directory where the client should look for additional providers:
         path: "/morrigan.client/providers"
     },
 
+    // The URL that the client should connect to:
     reportURL: "http://localhost/api/connection/connect",
     token: "RkxPUkVOU1RS.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjhmY2U3ZGVhLTdhMDItNGQ1NS1hMzdkLTc3NTkwNGEzMTU4OSIsImNsaWVudElkIjoiRkxPUkVOU1RSIiwiaWF0IjoxNjE0Nzk1MDcwLCJleHAiOjE2MTczODM0NzB9.-_hN4wSkmDUbvMq3ADRH4sqYYjJtZr52I1o8xe-kI1Q"
 }
