@@ -3,7 +3,7 @@
     "ws": "^7.4.5"
   },
   "name": "morrigan.client",
-  "version": "0.0.1",
+  "version": "0.0.9",
   "description": "Client used to connect a computer to the Morrigan management system.",
   "main": "client.js",
   "devDependencies": {},
