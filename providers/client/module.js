@@ -51,6 +51,12 @@ module.exports.setup = (core) => {
         
         saveToken()
     } else {
+
+        if (core.args.token || core.args.tokenFile) {
+            console.log('A token was specified on the command line, but there is already a token installed, the existing token will be used.')
+            console.log('To install the new token, use the --force parameter.')
+        }
+
         loadToken()
     }
 
