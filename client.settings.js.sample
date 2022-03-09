@@ -4,10 +4,11 @@ module.exports = {
     // the state directory will be created under the morrigan client directory.
     stateDir: "/morrigan.client/state",
 
-    providers: {
-        // Path to a directory where the client should look for additional providers:
-        path: "/morrigan.client/providers"
-    },
+    providers: [
+        "@adicitus/morrigan.client.providers.client",
+        "@adicitus/morrigan.client.providers.connection",
+        "@adicitus/morrigan.client.providers.capability"
+    ],
 
     // The URL that the client should connect to:
     reportURL: "http://localhost/api/connection/connect",

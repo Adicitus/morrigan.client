@@ -55,37 +55,35 @@ if (!fs.existsSync(stateDir)) {
  *  + A 'onStop' function that is called when the client receives a stop
  *    signal rom the OS.
  */
-function loadProviders(providersDir, providers) {
-    if (!providersDir) {
-        providersDir = `${__dirname}/providers`
-    }
+function loadProviders(providersList, providers) {
 
     if (!providers) {
         providers = {}
     }
 
-    let providerNames = fs.readdirSync(providersDir)
-    for (var i in providerNames) {
-        let name = providerNames[i]
-        let providerModulePath = `${providersDir}/${name}/module.js`
-        if (fs.existsSync(providerModulePath)) {
-            try {
-                let provider = require(providerModulePath)
-                providers[name] = provider
-            } catch(e) {
-                log(`Failed to read provider module '${providerModulePath}': ${e}`)
-            }
-        }
+    if (!Array.isArray(providersList)) {
+        providersList = [providersList]
     }
+
+    providersList.forEach(packageName => {
+        try {
+            log(`Loading '${packageName}'...`)
+            let provider = require(packageName)
+            let name = packageName
+            if (provider.name) {
+                name = provider.name
+                log(`Registering '${packageName}' as '${name}'...`)
+            }
+            providers[name] = provider
+        } catch (e) {
+            log(`Failed to read provider module '${packageName}': ${e}`)
+        } 
+    })
 
     return providers
 }
 // Loading core providers:
-var providers = loadProviders()
-// Loading extra providers if relevant:
-if (settings.providers && settings.providers.path) {
-    providers = loadProviders(settings.providers.path, providers)
-}
+var providers = loadProviders(settings.providers, providers)
 
 /**
  * Core environment object, passed to all message handlers and setup functions.
