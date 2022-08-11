@@ -80,6 +80,30 @@ class MorriganClient {
     }
 
     /**
+     * Sends a message to the server.
+     * 
+     * @param {object} message Message object to send. 
+     */
+    send(message) {
+        // 1. Verify state of connection to server:
+        if (!this.connection) {
+            throw new Error(`Unable to send message: No WebSocket connection established.`)
+        }
+
+        if (this.connection.readyState !== 1) {
+            throw new Error(`Unable to send message: WebSocket connection was in a non-ready state (found '${this.connection.readyState}', expected '1')`)
+        }
+
+        // 2. Verify that message format is correct:
+        if (typeof message.type !== 'string') {
+            throw new Error(`Unable to send message: Invalid message 'type' declaration (found '${typeof message.type}', expected 'string')`)
+        }
+
+        // 3. Send message
+        this.connection.send(JSON.stringify(message))
+    }
+
+    /**
      * Handlers should be defined as modules and loaded from the 'providers' directory.
      * Provider modules should export a 'version' string and optionally:
      *  + A 'messages' object. Each key on the 'messages' object should
