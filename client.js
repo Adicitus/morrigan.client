@@ -77,6 +77,53 @@ class MorriganClient {
                 provider.setup(this.coreEnv)
             }
         }
+        
+        let connectionProvider = this.providers.connection
+
+        // Set up message handling:
+        if (!connectionProvider) {
+            this.log("No connection provider loaded.", 'warn')
+            return
+        } else {
+            connectionProvider.on('message', (msg, connection) => {
+                let m = msg.type.match(/^(?<provider>[A-z0-9\-_]+)\.(?<message>[A-z0-9\-_.]+)$/)
+
+                if (!m) {
+                    self.log(`Invalid message received from server (invalid type format): ${message}`)
+                    return
+                }
+
+                let p = self.providers[m.groups.provider]
+
+                if (!p) {
+                    self.log(`No provider for the given message type: ${message}`)
+                    return
+                }
+
+                let h = p.messages[m.groups.message]
+
+                if (!h) {
+                    self.log(`The provider does not support the given message type: ${message}`)
+                    return
+                }
+
+                try {
+                    h(msg, connection, self.coreEnv)
+                } catch(e) {
+                    self.log(`Exception occured while processing message: ${e}`)
+                }
+            })
+        }
+
+        let self = this
+
+        const handleSignal = (e) => {
+            self.stop(e)
+        }
+
+        process.on('SIGTERM', handleSignal)
+        process.on('SIGINT',  handleSignal)
+        process.on('SIGHUP',  handleSignal)
     }
 
     /**
@@ -85,13 +132,12 @@ class MorriganClient {
      * @param {object} message Message object to send. 
      */
     send(message) {
-        // 1. Verify state of connection to server:
-        if (!this.connection) {
-            throw new Error(`Unable to send message: No WebSocket connection established.`)
-        }
 
-        if (this.connection.readyState !== 1) {
-            throw new Error(`Unable to send message: WebSocket connection was in a non-ready state (found '${this.connection.readyState}', expected '1')`)
+        let connectionProvider = this.providers.connection
+
+        // 1. Verify state of connection to server:
+        if (!connectionProvider) {
+            throw new Error(`Unable to send message: No connection provider loaded.`)
         }
 
         // 2. Verify that message format is correct:
@@ -100,7 +146,7 @@ class MorriganClient {
         }
 
         // 3. Send message
-        this.connection.send(JSON.stringify(message))
+        connectionProvider.send(message)
     }
 
     /**
@@ -169,145 +215,33 @@ class MorriganClient {
      * Main function, tries to connect to a server.
      */
     connect() {
-
-        let self = this
-
-        var reportURL = ""
-        
-        if(this.settings.reportURL) {
-            reportURL = this.settings.reportURL
-        } else {
-            throw new Error('No reportURL specified.')
+        if (!this.providers.connection) {
+            throw new Error(`Unable to send message: No connection provider loaded.`)
         }
 
-        this.log(`Connecting to '${reportURL}'`)
+        this.providers.connection.connect()
+    }
 
-        const connection = new WebSocket(reportURL, { origin: this.providers.client.getToken()})
+    /**
+     * Stop the client and clean up any associated resources.
+     * 
+     * This will call the onStop hook on all providers that declare it.
+     * 
+     * @param {string} reason Status message indicating the reason for the stop.
+     */
+    stop(reason) {
+        this.log(reason)
 
-        this.connection = connection
-
-        connection.on('error', (e) => {
-            self.log(`${new Date()} | Failed to contact server: ${e}`)
-        })
-
-        connection.on('open', () => {
-            self.log(`${new Date()} | Connection to server opened.`)
-
-            for (const n in self.providers) {
-                let p = self.providers[n]
-
-                if (p.onConnect) {
-                    p.onConnect(connection, self.coreEnv)
-                }
+        for (const n in this.providers) {
+            let p = this.providers[n]
+    
+            if (p.onStop) {
+                p.onStop(reason, this.coreEnv)
             }
-
-        })
-
-        connection.on('message', (message) => {
-
-            try {
-                var msg = JSON.parse(message)
-            } catch (e) {
-                self.log(`Invalid message received from server (not valid JSON): ${message}`)
-                return
-            }
-
-            if (!msg.type) {
-                self.log(`Invalid message received from server (no type declaration): ${message}`)
-                return
-            }
-
-            let m = msg.type.match(/^(?<provider>[A-z0-9\-_]+)\.(?<message>[A-z0-9\-_.]+)$/)
-
-            if (!m) {
-                self.log(`Invalid message received from server (invalid type format): ${message}`)
-                return
-            }
-
-            let p = self.providers[m.groups.provider]
-
-            if (!p) {
-                self.log(`No provider for the given message type: ${message}`)
-                return
-            }
-
-            let h = p.messages[m.groups.message]
-
-            if (!h) {
-                self.log(`The provider does not support the given message type: ${message}`)
-                return
-            }
-
-            try {
-                h(msg, connection, self.coreEnv)
-            } catch(e) {
-                self.log(`Exception occured while processing message: ${e}`)
-            }
-
-        })
-
-        connection.on('close', (e) => {
-            self.log(`Connection to server closed`)
-
-            for (const n in self.providers) {
-                let p = self.providers[n]
-        
-                if (p.onDisconnect) {
-                    p.onDisconnect(connection, self.coreEnv)
-                }
-            }
-
-            if (self.alwaysReconnect) {
-                self.log(`Attempting to reconnect in 30 seconds: ${e}`)
-                self.nextConnectionAttempt = setTimeout(() => {
-                    self.nextConnectionAttempt = null
-                    self.connect()
-                }, self.reconnectIntervalSeconds * 1000)
-            }
-        })
-
-        const handleSignal = (e) => {
-            self.log(e)
-            self.alwaysReconnect = false
-            if (connection.readyState === 1) {
-                connection.send(JSON.stringify({
-                    type: 'client.state',
-                    state: `stopped.${e}`
-                }))
-                connection.close()
-
-                /*
-                * Calling 'onDisconnect' handlers here because the 'close' event
-                * on ws connection objects does not get called when the 'close'
-                * method is called.
-                */
-                for (const n in self.providers) {
-                    let p = self.providers[n]
-            
-                    if (p.onDisconnect) {
-                        p.onDisconnect(connection, self.coreEnv)
-                    }
-                }
-            }
-
-            for (const n in self.providers) {
-                let p = self.providers[n]
-        
-                if (p.onStop) {
-                    p.onStop(e, connection, self.coreEnv)
-                }
-            }
-
-            process.exit()
         }
-
-        process.on('SIGTERM', handleSignal)
-        process.on('SIGINT',  handleSignal)
-        process.on('SIGHUP',  handleSignal)
-
     }
 }
 
 module.exports = (settings, log) => {
     return new MorriganClient(settings, log)
-} 
+}
