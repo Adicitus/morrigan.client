@@ -1,6 +1,5 @@
 "use strict"
 
-const WebSocket = require('ws')
 const fs = require('fs')
 
 class MorriganClient {
@@ -114,16 +113,6 @@ class MorriganClient {
                 }
             })
         }
-
-        let self = this
-
-        const handleSignal = (e) => {
-            self.stop(e)
-        }
-
-        process.on('SIGTERM', handleSignal)
-        process.on('SIGINT',  handleSignal)
-        process.on('SIGHUP',  handleSignal)
     }
 
     /**
