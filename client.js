@@ -128,18 +128,37 @@ class MorriganClient {
         }
 
         providersList.forEach(packageName => {
-            try {
-                this.log(`Loading '${packageName}'...`)
-                let provider = require(packageName)
-                let name = packageName
-                if (provider.name) {
-                    name = provider.name
-                    this.log(`Registering '${packageName}' as '${name}'...`)
-                }
-                providers[name] = provider
-            } catch (e) {
-                this.log(`Failed to read provider module '${packageName}': ${e}`)
-            } 
+
+            switch (typeof packageName) {
+                case 'string':
+                    // Package name
+                    try {
+                        this.log(`Loading '${packageName}'...`)
+                        let provider = require(packageName)
+                        let name = packageName
+                        if (provider.name) {
+                            name = provider.name
+                            this.log(`Registering '${packageName}' as '${name}'...`)
+                        }
+                        providers[name] = provider
+                    } catch (e) {
+                        this.log(`Failed to read provider module '${packageName}': ${e}`)
+                    }
+                    break
+                case 'object':
+                    // Preloaded module
+                    let name = packageName.name
+
+                    if (!name || typeof name !== 'string') {
+                        return
+                    }
+
+                    this.log(`Registering pre-loaded module as '${name}'...`)
+
+                    providers[name] = packageName
+
+                    break
+            }
         })
 
         return providers
